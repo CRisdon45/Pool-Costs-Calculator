@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phoenix Pool Consultant</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="theme-color" content="#007AFF">
+    <style>
+        :root { --primary: #007AFF; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E; --sub: #8E8E93; --danger: #FF3B30; --success: #34C759; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; padding-bottom: 80px; }
+        
+        h1 { margin: 0; font-size: 20px; text-align: center; color: #000; }
+        .subtitle { font-size: 12px; color: var(--sub); text-align: center; margin-bottom: 20px; }
+        
+        .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; }
+        .card-title { font-size: 16px; font-weight: 700; text-transform: uppercase; color: #555; }
+        .section-total { font-size: 16px; font-weight: 800; color: var(--primary); }
+
+        .input-group { margin-bottom: 12px; }
+        .input-label-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        label { font-size: 13px; font-weight: 600; color: #333; }
+        .val-display { color: var(--primary); font-weight: 700; font-size: 13px; }
+        input[type="range"] { width: 100%; accent-color: var(--primary); height: 5px; border-radius: 5px; }
+
+        /* Toggles */
+        .toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .toggle-btn { flex: 1; padding: 10px; background: #f2f2f7; border-radius: 8px; text-align: center; font-size: 12px; font-weight: 600; color: #666; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .toggle-btn.active { background: #e3f2fd; border-color: var(--primary); color: var(--primary); }
+
+        /* Data Tables */
+        .cost-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px dashed #eee; }
+        .cost-row:last-child { border-bottom: none; }
+        .cost-label { color: #555; }
+        .cost-label small { display: block; font-size: 10px; color: #999; }
+        .cost-val { font-weight: 600; text-align: right; }
+
+        /* Spa Specific */
+        .month-selector { display: flex; overflow-x: auto; gap: 5px; padding-bottom: 10px; margin-bottom: 10px; }
+        .month-btn { min-width: 40px; padding: 6px 0; text-align: center; background: #f0f0f0; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; }
+        .month-btn.active { background: #FF9500; color: white; }
+
+        /* Finance Input */
+        .finance-toggle { display: flex; background: #e9e9eb; padding: 3px; border-radius: 10px; margin-bottom: 15px; }
+        .mode-btn { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; color: #666; }
+        .mode-btn.active { background: #fff; color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .big-input { width: 100%; padding: 12px; font-size: 20px; border: 1px solid #ddd; border-radius: 10px; font-weight: 700; color: var(--primary); box-sizing: border-box; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h1>Phoenix Pool Consultant</h1>
+    <div class="subtitle">Operational & Financial Analysis</div>
+
+    <!-- 1. POOL BASE CONFIG -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">1. Pool Configuration</span>
+            <span class="section-total" id="total-pool">$0/mo</span>
+        </div>
+
+        <div class="input-group">
+            <div class="input-label-row"><label>Perimeter</label><span id="disp-perim" class="val-display">90 ft</span></div>
+            <input type="range" id="inp-perim" min="60" max="160" value="90" oninput="updateAll()">
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div class="input-group">
+                <div class="input-label-row"><label>Shallow</label><span id="disp-shallow" class="val-display">3.5 ft</span></div>
+                <input type="range" id="inp-shallow" min="3" max="6" value="3.5" step="0.5" oninput="updateAll()">
+            </div>
+            <div class="input-group">
+                <div class="input-label-row"><label>Deep</label><span id="disp-deep" class="val-display">5.0 ft</span></div>
+                <input type="range" id="inp-deep" min="4" max="8" value="5.0" step="0.5" oninput="updateAll()">
+            </div>
+        </div>
+
+        <label style="margin-bottom:8px; display:block;">Cleaning System</label>
+        <div class="toggle-row">
+            <div class="toggle-btn active" id="btn-vac" onclick="setClean('vac')">
+                Vacuum<br><span style="font-size:9px; font-weight:400">Low Energy</span>
+            </div>
+            <div class="toggle-btn" id="btn-pv3" onclick="setClean('pv3')">
+                PV3 In-Floor<br><span style="font-size:9px; font-weight:400">High Energy / Better Heat</span>
+            </div>
+        </div>
+
+        <div style="background:#f9f9f9; padding:10px; border-radius:8px;">
+            <div class="cost-row">
+                <div class="cost-label">Est. Volume</div>
+                <div class="cost-val" id="out-vol">13,500 gal</div>
+            </div>
+            <div class="cost-row">
+                <div class="cost-label">Electricity<small>Pump Filtration</small></div>
+                <div class="cost-val" id="cost-pool-elec">$15</div>
+            </div>
+            <div class="cost-row">
+                <div class="cost-label">Full Service<small>Chems + Labor</small></div>
+                <div class="cost-val" id="cost-pool-maint">$130</div>
+            </div>
+            <div class="cost-row" style="color:#666;">
+                <div class="cost-label">DIY Option<small>Chems Only</small></div>
+                <div class="cost-val" id="cost-pool-diy">$65</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. HEATING CONFIG -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">2. Heating / Cooling</span>
+            <span class="section-total" id="total-heat">$0/mo</span>
+        </div>
+
+        <div class="input-group">
+            <div class="input-label-row"><label>Target Temp (Winter)</label><span id="disp-heat-temp" class="val-display">85°F</span></div>
+            <input type="range" id="inp-heat-temp" min="70" max="95" value="85" oninput="updateAll()">
+        </div>
+        
+        <div class="input-group">
+            <div class="input-label-row"><label>Usage (Days/Month)</label><span id="disp-heat-days" class="val-display">4 days</span></div>
+            <input type="range" id="inp-heat-days" min="0" max="30" value="4" oninput="updateAll()">
+        </div>
+
+        <div style="background:#f9f9f9; padding:10px; border-radius:8px;">
+            <div class="cost-row">
+                <div class="cost-label">Natural Gas<small>Winter Avg (Nov-Apr)</small></div>
+                <div class="cost-val" id="cost-heat-gas">$0</div>
+            </div>
+            <div class="cost-row">
+                <div class="cost-label">Heat Pump (Heat)<small>Winter Avg (Nov-Apr)</small></div>
+                <div class="cost-val" id="cost-heat-hp">$0</div>
+            </div>
+            <div class="cost-row">
+                <div class="cost-label">Heat Pump (Cool)<small>Summer Avg (Jun-Sep)</small></div>
+                <div class="cost-val" id="cost-cool-hp">$0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. SPA CONFIG -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">3. Spa Configuration</span>
+            <span class="section-total" id="total-spa">$0/mo</span>
+        </div>
+
+        <div class="input-group">
+            <div class="input-label-row"><label>Spa Perimeter (0 = None)</label><span id="disp-spa-p" class="val-display">0 ft</span></div>
+            <input type="range" id="inp-spa-p" min="0" max="40" value="0" step="1" oninput="updateAll()">
+        </div>
+
+        <div id="spa-controls" style="display:none;">
+            <div class="input-group">
+                <div class="input-label-row"><label>Sessions per Month</label><span id="disp-spa-days" class="val-display">4</span></div>
+                <input type="range" id="inp-spa-days" min="1" max="15" value="4" oninput="updateAll()">
+            </div>
+
+            <label style="margin-bottom:5px; display:block;">Select Month for Estimate</label>
+            <div class="month-selector" id="month-list">
+                <!-- JS Populated -->
+            </div>
+
+            <div style="background:#fff3e0; padding:10px; border-radius:8px;">
+                <div class="cost-row">
+                    <div class="cost-label">Heat Up Time<small>500k Heater</small></div>
+                    <div class="cost-val" id="spa-time">45 min</div>
+                </div>
+                <div class="cost-row">
+                    <div class="cost-label">Cost Per Session<small>Gas + Pump</small></div>
+                    <div class="cost-val" id="spa-session-cost">$4.50</div>
+                </div>
+                <div class="cost-row" style="border-top:1px solid #ebd3b6; margin-top:5px; padding-top:5px;">
+                    <div class="cost-label" style="font-weight:700; color:#e65100;">Monthly Total</div>
+                    <div class="cost-val" style="color:#e65100;" id="spa-monthly-total">$18</div>
+                </div>
+            </div>
+        </div>
+        <div id="spa-placeholder" style="text-align:center; color:#999; font-size:12px; padding:10px;">
+            Set Perimeter > 0 to enable Spa
+        </div>
+    </div>
+
+    <!-- 4. FINANCE -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">4. Financial Engine</span>
+        </div>
+        
+        <div class="finance-toggle">
+            <div class="mode-btn active" id="btn-cost" onclick="setFinanceMode('cost')">Input Cost</div>
+            <div class="mode-btn" id="btn-pay" onclick="setFinanceMode('pay')">Input Payment</div>
+        </div>
+
+        <div style="margin-bottom:15px;">
+            <label id="lbl-fin-input" style="display:block; margin-bottom:5px; text-align:center;">Total Project Cost</label>
+            <input type="number" id="inp-finance" class="big-input" value="85000" oninput="updateFinance()">
+        </div>
+
+        <div style="background:#f9f9f9; padding:10px; border-radius:8px;">
+            <div class="cost-row">
+                <div class="cost-label">Excellent (780+)<small>Unsecured 15yr (6.99%)</small></div>
+                <div class="cost-val" style="color:var(--success);" id="fin-tier1">$764</div>
+            </div>
+            <div class="cost-row">
+                <div class="cost-label">Good (700+)<small>Unsecured 15yr (8.99%)</small></div>
+                <div class="cost-val" id="fin-tier2">$862</div>
+            </div>
+            <div class="cost-row">
+                <div class="cost-label">HELOC<small>Secured (~8.50%)</small></div>
+                <div class="cost-val" style="color:var(--primary);" id="fin-tier3">$837</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTS ---
+        const RATE_GAS = 1.60;
+        const RATE_ELEC = 0.12; 
+        
+        const MONTHS = [
+            {n:"Jan", air:55}, {n:"Feb", air:59}, {n:"Mar", air:64},
+            {n:"Apr", air:72}, {n:"May", air:81}, {n:"Jun", air:90},
+            {n:"Jul", air:94}, {n:"Aug", air:93}, {n:"Sep", air:88},
+            {n:"Oct", air:77}, {n:"Nov", air:64}, {n:"Dec", air:54}
+        ];
+
+        let state = {
+            cleaning: 'vac', // 'vac' or 'pv3'
+            finMode: 'cost',
+            spaMonth: 0 // Jan index
+        };
+
+        // Init Month Buttons
+        const mList = document.getElementById('month-list');
+        MONTHS.forEach((m, idx) => {
+            const btn = document.createElement('div');
+            btn.className = idx === 0 ? 'month-btn active' : 'month-btn';
+            btn.innerText = m.n;
+            btn.onclick = () => {
+                document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.spaMonth = idx;
+                updateAll();
+            };
+            mList.appendChild(btn);
+        });
+
+        function setClean(type) {
+            state.cleaning = type;
+            document.getElementById('btn-vac').className = type === 'vac' ? 'toggle-btn active' : 'toggle-btn';
+            document.getElementById('btn-pv3').className = type === 'pv3' ? 'toggle-btn active' : 'toggle-btn';
+            updateAll();
+        }
+
+        function setFinanceMode(mode) {
+            state.finMode = mode;
+            document.getElementById('btn-cost').className = mode === 'cost' ? 'mode-btn active' : 'mode-btn';
+            document.getElementById('btn-pay').className = mode === 'pay' ? 'mode-btn active' : 'mode-btn';
+            
+            const label = document.getElementById('lbl-fin-input');
+            const input = document.getElementById('inp-finance');
+            if(mode === 'cost') {
+                label.innerText = "Total Project Cost";
+                input.value = 85000;
+            } else {
+                label.innerText = "Target Monthly Payment";
+                input.value = 800;
+            }
+            updateFinance();
+        }
+
+        function updateAll() {
+            // 1. POOL CALCS
+            const P = parseFloat(document.getElementById('inp-perim').value);
+            const Ds = parseFloat(document.getElementById('inp-shallow').value);
+            const Dd = parseFloat(document.getElementById('inp-deep').value);
+            
+            document.getElementById('disp-perim').innerText = P + " ft";
+            document.getElementById('disp-shallow').innerText = Ds + " ft";
+            document.getElementById('disp-deep').innerText = Dd + " ft";
+
+            const PoolArea = (P * P) / 18;
+            const PoolVol = PoolArea * ((Ds+Dd)/2) * 7.5;
+            document.getElementById('out-vol').innerText = Math.round(PoolVol).toLocaleString() + " gal";
+
+            // Cleaning Logic
+            // Vac: 300W * 10h = 3kWh
+            // PV3: 2000W * 5h + 300W * 5h = 11.5kWh
+            const dailyKwh = state.cleaning === 'vac' ? 3.0 : 11.5;
+            const monthlyElec = dailyKwh * 30 * RATE_ELEC;
+            document.getElementById('cost-pool-elec').innerText = "$" + Math.round(monthlyElec);
+
+            // Chems Logic
+            let chemsDIY = 50;
+            if(PoolVol > 15000) chemsDIY += (PoolVol-15000)*0.002;
+            const fullService = 80 + chemsDIY; // Labor premium
+            
+            document.getElementById('cost-pool-maint').innerText = "$" + Math.round(fullService);
+            document.getElementById('cost-pool-diy').innerText = "$" + Math.round(chemsDIY);
+            
+            // Pool Total Display
+            const poolTotal = monthlyElec + fullService;
+            document.getElementById('total-pool').innerText = "$" + Math.round(poolTotal) + "/mo";
+
+
+            // 2. HEATING CALCS
+            const targetT = parseFloat(document.getElementById('inp-heat-temp').value);
+            const daysUsed = parseFloat(document.getElementById('inp-heat-days').value);
+            document.getElementById('disp-heat-temp').innerText = targetT + "°F";
+            document.getElementById('disp-heat-days').innerText = daysUsed + " days";
+
+            // Gas (Winter Avg 55F)
+            // PV3 Bonus: 10% efficiency gain (0.9 factor)
+            const effFactor = state.cleaning === 'pv3' ? 0.9 : 1.0;
+            const winterDelta = Math.max(0, targetT - 55);
+            // Daily BTU needed (Surface loss + heatup)
+            const dailyBTU = PoolArea * winterDelta * 18 * 24 * effFactor; 
+            const dailyGasCost = (dailyBTU / 100000 / 0.84) * RATE_GAS;
+            const monthlyGas = dailyGasCost * daysUsed;
+            document.getElementById('cost-heat-gas').innerText = "$" + Math.round(monthlyGas);
+
+            // HP Heat (Winter Avg) - Maintenance
+            // COP 4.0
+            const hpHeatBTU = PoolArea * (targetT - 55) * 12 * 24 * effFactor; 
+            const hpHeatCost = (hpHeatBTU / 3412 / 4.0) * RATE_ELEC * (daysUsed > 4 ? 30 : daysUsed); // If days > 4 assume maintenance mode all month
+            document.getElementById('cost-heat-hp').innerText = "$" + Math.round(hpHeatCost);
+
+            // HP Cool (Summer Avg 90F -> 85F)
+            const hpCoolBTU = PoolArea * 12 * 8 * 12; // Overnight
+            const hpCoolCost = (hpCoolBTU / 3412 / 3.5) * RATE_ELEC * 30; // Run every night
+            document.getElementById('cost-cool-hp').innerText = "$" + Math.round(hpCoolCost);
+
+            // Total Heat Display (Max of Gas or HP + Cool)
+            // Assuming user chooses one heat method
+            const heatTotal = Math.max(monthlyGas, hpHeatCost) + hpCoolCost;
+            document.getElementById('total-heat').innerText = "$" + Math.round(heatTotal) + "/mo";
+
+
+            // 3. SPA CALCS
+            const P_spa = parseFloat(document.getElementById('inp-spa-p').value);
+            document.getElementById('disp-spa-p').innerText = P_spa + " ft";
+            
+            let spaMonthly = 0;
+
+            if(P_spa > 0) {
+                document.getElementById('spa-controls').style.display = 'block';
+                document.getElementById('spa-placeholder').style.display = 'none';
+
+                const spaDays = parseFloat(document.getElementById('inp-spa-days').value);
+                document.getElementById('disp-spa-days').innerText = spaDays;
+
+                const SpaArea = (P_spa * P_spa) / 12.56;
+                const SpaVol = SpaArea * 3.5 * 7.5 * 0.85;
+
+                // Ambient based on selected month
+                const ambient = MONTHS[state.spaMonth].air;
+                const delta = 102 - ambient;
+
+                // Energy
+                const btuReq = SpaVol * 8.34 * delta;
+                const hours = btuReq / (500000 * 0.84); // 500k heater
+                const therms = btuReq / 100000 / 0.84;
+                
+                const gasCost = therms * RATE_GAS;
+                const pumpCost = (2.5 * hours) * RATE_ELEC; // 2.5kW pump
+                const sessionCost = gasCost + pumpCost;
+
+                document.getElementById('spa-time').innerText = Math.round(hours * 60) + " min";
+                document.getElementById('spa-session-cost').innerText = "$" + sessionCost.toFixed(2);
+                
+                spaMonthly = sessionCost * spaDays;
+                document.getElementById('spa-monthly-total').innerText = "$" + Math.round(spaMonthly);
+            } else {
+                document.getElementById('spa-controls').style.display = 'none';
+                document.getElementById('spa-placeholder').style.display = 'block';
+            }
+            document.getElementById('total-spa').innerText = "$" + Math.round(spaMonthly) + "/mo";
+        }
+
+        function updateFinance() {
+            const val = parseFloat(document.getElementById('inp-finance').value);
+            if(!val) return;
+            const n = 180; // 15 yr
+            const r1 = 6.99/100/12; const r2 = 8.99/100/12; const r3 = 8.50/100/12;
+
+            const t1 = document.getElementById('fin-tier1');
+            const t2 = document.getElementById('fin-tier2');
+            const t3 = document.getElementById('fin-tier3');
+
+            if(state.finMode === 'cost') {
+                const p1 = (val*r1*Math.pow(1+r1,n))/(Math.pow(1+r1,n)-1);
+                const p2 = (val*r2*Math.pow(1+r2,n))/(Math.pow(1+r2,n)-1);
+                const p3 = (val*r3*Math.pow(1+r3,n))/(Math.pow(1+r3,n)-1);
+                t1.innerText = "$"+Math.round(p1); t2.innerText = "$"+Math.round(p2); t3.innerText = "$"+Math.round(p3);
+            } else {
+                const c1 = val*(1-Math.pow(1+r1,-n))/r1;
+                const c2 = val*(1-Math.pow(1+r2,-n))/r2;
+                const c3 = val*(1-Math.pow(1+r3,-n))/r3;
+                t1.innerText = "$"+Math.round(c1).toLocaleString(); 
+                t2.innerText = "$"+Math.round(c2).toLocaleString(); 
+                t3.innerText = "$"+Math.round(c3).toLocaleString();
+            }
+        }
+
+        updateAll();
+        updateFinance();
+    </script>
+</body>
+</html>

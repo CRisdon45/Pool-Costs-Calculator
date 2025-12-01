@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Pool Costs Calculator</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#007AFF" />
+    <style>body{font-family:sans-serif;padding:30px} .btn{display:inline-block;padding:10px 14px;background:#007aff;color:white;border-radius:6px;text-decoration:none}</style>
+</head>
+<body>
+    <h1>Pool Costs Calculator</h1>
+    <p>Welcome! This demo now includes a Service Worker for offline caching and a small PWA manifest.</p>
+    <p>Use the icon generator to create app icons for the PWA (icon-192 and icon-512):</p>
+    <p><a class="btn" href="icon-generator.html">Open Icon Generator</a></p>
+    <script>
+        // Register Service Worker if supported
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js').then(reg => {
+                console.log('Service worker registered', reg);
+            }).catch(err => {
+                console.warn('Service worker registration failed', err);
+            });
+        }
+    </script>
+</body>
+</html>
